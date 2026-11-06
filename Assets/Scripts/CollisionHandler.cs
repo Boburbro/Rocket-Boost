@@ -6,6 +6,8 @@ using UnityEngine.SceneManagement;
 public class CollisionHandler : MonoBehaviour
 {   
   [SerializeField] float levelLoadDelay = 2f;
+  // Raketa shu balandlikdan pastga tushib ketsa (platformadan tushib ketdi), game over bo'ladi
+  [SerializeField] float fallLimitY = -8f;
   [SerializeField] AudioClip successSFX;
   [SerializeField] AudioClip crashSFX;
   [SerializeField] ParticleSystem successParticles;
@@ -23,11 +25,21 @@ public class CollisionHandler : MonoBehaviour
   
   private void Update() 
   {
-    RespondToDebugKeys();        
+    RespondToDebugKeys();
+    CheckFall();
   }
  
+  void CheckFall()
+  {
+    if (isControllable && transform.position.y < fallLimitY)
+    {
+      StartCrashSequence();
+    }
+  }
+
   void RespondToDebugKeys()
   {
+    if (Keyboard.current == null) { return; } // telefonda klaviatura yo'q
     if (Keyboard.current.lKey.wasPressedThisFrame)
     {
       LoadNextLevel();
@@ -73,8 +85,26 @@ public class CollisionHandler : MonoBehaviour
     audioSource.PlayOneShot(crashSFX);
     crashParticles.Play();
     GetComponent<Movement>().enabled = false;
-    Invoke("ReloadLevel", levelLoadDelay);
-  }
+    Invoke("ShowGameOver", levelLoadDelay);
+  }
+
+  void ShowGameOver()
+  {
+    var ads = AdsManager.Instance;
+    bool isFirstLevel = SceneManager.GetActiveScene().buildIndex == 0;
+
+    if (isFirstLevel)
+    {
+      GameOverUI.Show("GAME OVER", "Level 1 da urildingiz",
+        ("Reklama ko'rib keyingi levelga o'tish", () => ads.ShowRewarded(LoadNextLevel)),
+        ("Boshidan boshlash", ReloadLevel));
+    }
+    else
+    {
+      GameOverUI.Show("GAME OVER", "Qayta o'ynash uchun reklama ko'ring",
+        ("Reklama ko'rib qayta o'ynash", () => ads.ShowRewarded(ReloadLevel)));
+    }
+  }
  
   void LoadNextLevel()
   {
