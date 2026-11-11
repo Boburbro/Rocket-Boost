@@ -49,8 +49,8 @@ public class Movement : MonoBehaviour
 
     // UI orqali chaqiriladigan metodlar
     public void SetThrustUI(bool state) => isThrustingUI = state;
-    public void SetRotateLeftUI(bool state) => rotationUI = state ? 1f : (rotationUI > 0 ? 0f : rotationUI);
-    public void SetRotateRightUI(bool state) => rotationUI = state ? -1f : (rotationUI < 0 ? 0f : rotationUI);
+    public void SetRotateLeftUI(bool state) => rotationUI = state ? -1f : (rotationUI < 0 ? 0f : rotationUI);
+    public void SetRotateRightUI(bool state) => rotationUI = state ? 1f : (rotationUI > 0 ? 0f : rotationUI);
 
     private void ProcessThrust()
     {
@@ -69,7 +69,10 @@ public class Movement : MonoBehaviour
         rb.AddRelativeForce(Vector3.up * thrustStrength * Time.fixedDeltaTime);
         if (mainEngineSFX != null && !audioSource.isPlaying)
         {
-            audioSource.PlayOneShot(mainEngineSFX);
+            // Dvigatel ovozi uzluksiz aylanadi (bo'lak oxiri boshiga silliq ulanadi)
+            audioSource.clip = mainEngineSFX;
+            audioSource.loop = true;
+            audioSource.Play();
         }
         if (mainEngineParticles != null && !mainEngineParticles.isPlaying)
         {

@@ -17,20 +17,21 @@ public static class GameOverUI
         var canvas = canvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 500;
-        var scaler = canvasGO.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280, 720);
-        scaler.matchWidthOrHeight = 0.5f;
+        UiKit.SetupScaler(canvasGO.GetComponent<CanvasScaler>());
 
         // Qoraytirilgan fon (bosishlarni ham to'sadi)
-        var dim = NewImage(canvasGO.transform, "Dim", new Color(0, 0, 0, 0.6f));
+        var dim = NewImage(canvasGO.transform, "Dim", new Color(0.01f, 0.01f, 0.06f, 0.7f));
         Stretch(dim.rectTransform);
 
         float panelH = 230 + buttons.Length * 120;
-        var panel = NewImage(canvasGO.transform, "Panel", new Color(0.12f, 0.14f, 0.2f, 0.97f));
+        var panel = NewImage(canvasGO.transform, "Panel", new Color(0.06f, 0.08f, 0.2f, 0.97f));
+        Round(panel, 1.2f);
         Center(panel.rectTransform, new Vector2(0, 0), new Vector2(900, panelH));
 
-        var titleText = NewText(panel.transform, "Title", title, 64, FontStyle.Bold, new Color(1f, 0.4f, 0.3f));
+        var border = UiKit.Img(panel.transform, "Border", UiKit.PillOutline, new Color(0.36f, 0.88f, 1f, 0.5f), 1.2f);
+        Stretch(border.rectTransform);
+
+        var titleText = NewText(panel.transform, "Title", title, 64, FontStyle.Bold, UiKit.Pink);
         Place(titleText.rectTransform, panelH / 2 - 60, 90);
 
         var msgText = NewText(panel.transform, "Message", message, 34, FontStyle.Normal, Color.white);
@@ -39,12 +40,15 @@ public static class GameOverUI
         for (int i = 0; i < buttons.Length; i++)
         {
             var action = buttons[i].action;
-            var btnImg = NewImage(panel.transform, "Button" + i, new Color(0.15f, 0.6f, 0.9f, 1f));
+            // Birinchi tugma — asosiy (moviy), qolganlari — ikkinchi darajali (binafsha)
+            bool primary = i == 0;
+            var btnImg = NewImage(panel.transform, "Button" + i, primary ? UiKit.Cyan : new Color(0.3f, 0.26f, 0.62f, 1f));
+            Round(btnImg, 1f);
             Place(btnImg.rectTransform, panelH / 2 - 230 - i * 120, 100, 760);
             var btn = btnImg.gameObject.AddComponent<Button>();
             btn.targetGraphic = btnImg;
             btn.onClick.AddListener(() => action?.Invoke());
-            var label = NewText(btnImg.transform, "Label", buttons[i].label, 36, FontStyle.Bold, Color.white);
+            var label = NewText(btnImg.transform, "Label", buttons[i].label, 36, FontStyle.Bold, primary ? UiKit.Ink : Color.white);
             Stretch(label.rectTransform);
         }
     }
@@ -56,6 +60,14 @@ public static class GameOverUI
         var img = go.GetComponent<Image>();
         img.color = color;
         return img;
+    }
+
+    // Burchaklarni yumaloqlaydi
+    static void Round(Image img, float sliceScale)
+    {
+        img.sprite = UiKit.Pill;
+        img.type = Image.Type.Sliced;
+        img.pixelsPerUnitMultiplier = sliceScale;
     }
 
     static Text NewText(Transform parent, string name, string content, int size, FontStyle style, Color color)

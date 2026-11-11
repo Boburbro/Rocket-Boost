@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
@@ -8,7 +9,24 @@ public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     Movement playerMovement;
 
+    // Bosilganda rang va o'lcham o'zgarishi uchun (ixtiyoriy)
+    Image fill;
+    Color normalColor, pressedColor;
+
     public void SetType(ButtonType type) => buttonType = type;
+
+    public void SetVisual(Image image, Color normal, Color pressed)
+    {
+        fill = image;
+        normalColor = normal;
+        pressedColor = pressed;
+    }
+
+    void ShowPressed(bool isPressed)
+    {
+        transform.localScale = Vector3.one * (isPressed ? 0.92f : 1f);
+        if (fill != null) fill.color = isPressed ? pressedColor : normalColor;
+    }
 
     void Start()
     {
@@ -17,6 +35,7 @@ public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        ShowPressed(true);
         if (playerMovement == null) playerMovement = FindFirstObjectByType<Movement>();
         if (playerMovement == null) return;
 
@@ -38,6 +57,7 @@ public class HoldButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     void Release()
     {
+        ShowPressed(false);
         if (playerMovement == null) return;
 
         if (buttonType == ButtonType.Thrust) playerMovement.SetThrustUI(false);

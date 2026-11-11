@@ -38,22 +38,15 @@ public static class MobileControls
 
         EnsureEventSystem();
 
-        var canvasGO = new GameObject("MobileControls", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        var canvas = canvasGO.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100;
-        var scaler = canvasGO.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1280, 720);
-        scaler.matchWidthOrHeight = 0.5f;
+        var root = UiKit.CreateCanvas("MobileControls", 100, true, out _);
 
         // Chap va o'ng — pastki chapda, gaz — pastki o'ngda
-        CreateButton(canvasGO.transform, "LeftButton", "<", HoldButton.ButtonType.Left,
-            new Vector2(0, 0), new Vector2(110, 190), new Vector2(160, 160));
-        CreateButton(canvasGO.transform, "RightButton", ">", HoldButton.ButtonType.Right,
-            new Vector2(0, 0), new Vector2(290, 190), new Vector2(160, 160));
-        CreateButton(canvasGO.transform, "GasButton", "GAS", HoldButton.ButtonType.Thrust,
-            new Vector2(1, 0), new Vector2(-140, 210), new Vector2(200, 200));
+        CreateButton(root, "LeftButton", HoldButton.ButtonType.Left,
+            new Vector2(0, 0), new Vector2(110, 120), 140);
+        CreateButton(root, "RightButton", HoldButton.ButtonType.Right,
+            new Vector2(0, 0), new Vector2(270, 120), 140);
+        CreateButton(root, "GasButton", HoldButton.ButtonType.Thrust,
+            new Vector2(1, 0), new Vector2(-135, 140), 190);
     }
 
     // Sahnada EventSystem bo'lmasa yaratadi (sahna bilan birga yo'qoladi — takrorlanib qolmasligi uchun)
@@ -63,38 +56,37 @@ public static class MobileControls
             new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
     }
 
-    static void CreateButton(Transform parent, string name, string label, HoldButton.ButtonType type,
-        Vector2 anchor, Vector2 pos, Vector2 size)
+    // Dumaloq, yarim shaffof tugma: ichi to'q, atrofida neon halqa, o'rtasida strelka
+    static void CreateButton(Transform parent, string name, HoldButton.ButtonType type,
+        Vector2 anchor, Vector2 pos, float size)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(HoldButton));
-        go.transform.SetParent(parent, false);
+        bool thrust = type == HoldButton.ButtonType.Thrust;
+        Color accent = thrust ? UiKit.Pink : UiKit.Cyan;
+        Color normal = new Color(0.07f, 0.09f, 0.24f, 0.5f);
+        Color pressed = new Color(accent.r, accent.g, accent.b, 0.45f);
 
-        var rt = go.GetComponent<RectTransform>();
-        rt.anchorMin = rt.anchorMax = anchor;
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = pos;
-        rt.sizeDelta = size;
+        var fill = UiKit.Img(parent, name, UiKit.Disc, normal);
+        fill.raycastTarget = true;
+        UiKit.Place(fill.rectTransform, anchor, new Vector2(0.5f, 0.5f), pos, new Vector2(size, size));
 
-        var img = go.GetComponent<Image>();
-        img.color = type == HoldButton.ButtonType.Thrust
-            ? new Color(1f, 0.45f, 0.1f, 0.55f)
-            : new Color(1f, 1f, 1f, 0.4f);
+        var ring = UiKit.Img(fill.transform, "Ring", UiKit.Ring, accent);
+        UiKit.Stretch(ring.rectTransform);
 
-        go.GetComponent<HoldButton>().SetType(type);
+        var center = new Vector2(0.5f, 0.5f);
+        var icon = UiKit.Img(fill.transform, "Icon", UiKit.Chevron, Color.white);
+        float iconSize = size * (thrust ? 0.5f : 0.55f);
+        UiKit.Place(icon.rectTransform, center, center, new Vector2(0, thrust ? size * 0.08f : 0), new Vector2(iconSize, iconSize));
+        if (type == HoldButton.ButtonType.Left) icon.rectTransform.localEulerAngles = new Vector3(0, 0, 90);
+        else if (type == HoldButton.ButtonType.Right) icon.rectTransform.localEulerAngles = new Vector3(0, 0, -90);
 
-        var textGO = new GameObject("Label", typeof(RectTransform), typeof(Text));
-        textGO.transform.SetParent(go.transform, false);
-        var trt = textGO.GetComponent<RectTransform>();
-        trt.anchorMin = Vector2.zero;
-        trt.anchorMax = Vector2.one;
-        trt.offsetMin = trt.offsetMax = Vector2.zero;
-        var text = textGO.GetComponent<Text>();
-        text.text = label;
-        text.alignment = TextAnchor.MiddleCenter;
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 60;
-        text.fontStyle = FontStyle.Bold;
-        text.color = Color.white;
-        text.raycastTarget = false;
+        if (thrust)
+        {
+            var label = UiKit.Txt(fill.transform, "Label", "BOOST", 20, FontStyle.Bold, Color.white);
+            UiKit.Place(label.rectTransform, center, center, new Vector2(0, -size * 0.27f), new Vector2(size, 28));
+        }
+
+        var hold = fill.gameObject.AddComponent<HoldButton>();
+        hold.SetType(type);
+        hold.SetVisual(fill, normal, pressed);
     }
 }

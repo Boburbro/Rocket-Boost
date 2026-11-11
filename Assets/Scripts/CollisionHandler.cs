@@ -91,6 +91,7 @@ public class CollisionHandler : MonoBehaviour
   void ShowGameOver()
   {
     var ads = AdsManager.Instance;
+    ads.PrepareRewarded();
     bool isFirstLevel = SceneManager.GetActiveScene().buildIndex == 0;
 
     if (isFirstLevel)
